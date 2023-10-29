@@ -13,7 +13,7 @@ namespace CheckBeforeSelling
 				kNone = 0,
 				kEquipped,
 				kFavorite,
-				kArtifact
+				kUnique
 			};
 
 			ItemSelectHandler(const RE::GFxValue& a_oldFunc) :

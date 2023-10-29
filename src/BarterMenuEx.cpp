@@ -1,5 +1,6 @@
 #include "BarterMenuEx.h"
 #include "MessageBox.h"
+#include "Settings.h"
 
 namespace CheckBeforeSelling
 {
@@ -48,7 +49,7 @@ namespace CheckBeforeSelling
 
 			SkyrimScripting::ShowMessageBox(
 				GetConfirmMessageText(itemType),
-				{ "Yes", "No" },
+				{ "$Yes", "$No" },
 				[menu, keyboardOrMouseVal](unsigned int a_result) {
 					if (a_result == 0) {
 						RE::GFxValue obj;
@@ -69,18 +70,32 @@ namespace CheckBeforeSelling
 
 	const std::string BarterMenuEx::GetConfirmMessageText(ItemType a_type)
 	{
-		switch (a_type) {
-		case ItemType::kEquipped:
-			return R"(Sell this item you are currently equipped?)";
+		auto GetTranslationKey = [](ItemType a_type) -> const std::string {
+			switch (a_type) {
+			case ItemType::kEquipped:
+				return "$DoubleCheckBeforeSelling_EquippedItem";
 
-		case ItemType::kFavorite:
-			return R"(Sell this item you favorited?)";
+			case ItemType::kFavorite:
+				return "$DoubleCheckBeforeSelling_FavouritedItem";
 
-		case ItemType::kArtifact:
-			return R"(Sell this artifact item?)";
+			case ItemType::kUnique:
+				return "$DoubleCheckBeforeSelling_UniqueItem";
 
-		default:
+			default:
+				return "";
+			}
+		};
+
+		std::string translationKey = GetTranslationKey(a_type);
+		if (translationKey.empty()) {
 			return "Error Item Type!";
+		}
+
+		std::string result;
+		if (SKSE::Translation::Translate(translationKey, result)) {
+			return result;
+		} else {
+			return "Invaild Translation String: " + translationKey;
 		}
 	}
 
@@ -90,12 +105,32 @@ namespace CheckBeforeSelling
 			return ItemType::kNone;
 		}
 
-		if (a_item->data.GetEquipState() > 0) {
+		auto settings = CBS_Settings::GetSingleton();
+		if (a_item->data.GetEquipState() > 0 && settings->EnableCheckForEquipped) {
 			return ItemType::kEquipped;
 		}
 
-		if (a_item->data.GetFavorite()) {
+		if (a_item->data.GetFavorite() && settings->EnableCheckForFavourited) {
 			return ItemType::kFavorite;
+		}
+
+		auto HasExtraEnchanmtment = [](RE::InventoryEntryData* a_entry) -> bool {
+			if (!a_entry || !a_entry->extraLists) {
+				return false;
+			}
+
+			for (auto xList : *a_entry->extraLists) {
+				if (xList && xList->GetByType<RE::ExtraEnchantment>()) {
+					return true;
+				}
+			}
+
+			return false;
+		};
+
+		auto entryObj = a_item->data.objDesc;
+		if (settings->EnableCheckForUnique && entryObj && HasExtraEnchanmtment(entryObj)) {
+			return ItemType::kUnique;
 		}
 
 		return ItemType::kNone;
