@@ -1,14 +1,12 @@
 {
-    "name":  "doublecheckbeforeselling",
-    "version-string":  "1.0.0",
-    "description":  "",
-    "license":  "MIT",
-    "dependencies":  [
-                         "spdlog"
-                     ],
-    "features":  {
-                     "mo2-install":  {
-                                         "description":  "DoubleCheckBeforeSelling"
-                                     }
-                 }
+  "name": "doublecheckbeforeselling",
+  "version-string": "1.0.0",
+  "description": "",
+  "license": "MIT",
+  "dependencies": ["spdlog"],
+  "features": {
+    "mo2-install": {
+      "description": "Double Check Before Selling"
+    }
+  }
 }
